@@ -5,7 +5,8 @@ module.exports = {
   chainWebpack: config => {
     config
       .externals({
-        firebase: 'firebase'
+        firebase: 'firebase',
+        firebaseui: 'firebaseui'
       })
   },
   devServer: {
