@@ -12,53 +12,37 @@
     </template>
     <template #default>
       <v-btn @click="goList">List</v-btn>
-      Travel
-      uid: {{ uid }} / id: {{ id }}
-      {{ travel }}
-      <v-list>
-        <v-list-item
-          v-for="day in days"
-          :key="day"
-        >
-          {{ day }}
-        </v-list-item>
-      </v-list>
+      <v-btn @click="updateTravel">Update</v-btn>
+      <travel-schedule v-for="(schedule, index) in travel.schedules"
+          :key="index" v-model="travel.schedules[index]"></travel-schedule>
     </template>
   </app-container>
 </template>
 
 <script>
-import moment from 'moment'
-import { onTravel } from '../api/travels'
+import { onTravel, getDefaultTravel, getDefaultLocation, updateTravel } from '../api/travels'
 import AppContainer from '../components/AppContainer'
+import TravelSchedule from '../components/TravelSchedule'
+// import draggable from 'vuedraggable'
 
 export default {
   name: 'travel-detail',
   props: ['uid', 'id'],
-  components: { AppContainer },
+  components: { AppContainer, TravelSchedule },
   data: () => ({
-    travel: {
-    },
+    travel: getDefaultTravel(),
     unsubscribe: null,
   }),
-  computed: {
-    days() {
-      const range = []
-      if (this.travel.from && this.travel.to) {
-        const from = moment(this.travel.from)
-        const to = moment(this.travel.to)
-        const diff = to.diff(from, 'days')
-        for (let i = 0; i <= diff; i++) {
-            range.push(from.clone().add(i, 'day').format(moment.HTML5_FMT.DATE))
-        }
-      }
-      return range
-    }
-  },
   methods: {
     goList() {
       this.$router.push({ name: 'main', params: { uid: this.uid }})
-    }
+    },
+    addLocation(index) {
+      this.travel.schedules[index].locations.push(getDefaultLocation())
+    },
+    updateTravel() {
+      updateTravel(this.uid, this.id, this.travel)
+    },
   },
   created() {
     this.unsubscribe = onTravel(this.uid, this.id, (doc) => this.travel = doc.data)

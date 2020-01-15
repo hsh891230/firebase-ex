@@ -74,15 +74,8 @@
 </template>
 
 <script>
-import _ from 'lodash'
-import { getTravels, addTravel } from '../api/travels'
+import { getTravels, addTravel, getDefaultTravel } from '../api/travels'
 import AppContainer from '../components/AppContainer'
-
-const defaultTravel = {
-  title: null,
-  from: null,
-  to: null
-}
 
 const addHash = '#add'
 
@@ -93,7 +86,7 @@ export default {
   data: () => ({
     dialog: false,
     travels: [],
-    travel: _.cloneDeep(defaultTravel)
+    travel: getDefaultTravel()
   }),
   computed: {
     dates: {
@@ -139,7 +132,7 @@ export default {
           hash: ''
         })
       }
-      this.travel = _.cloneDeep(defaultTravel)
+      this.travel = getDefaultTravel()
       this.form.resetValidation()
     },
   },
