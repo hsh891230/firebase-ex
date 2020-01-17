@@ -2,35 +2,58 @@
   <v-card
     class="elevation-2"
   >
-    <v-card-title class="headline">{{ title }} {{ value.date }} {{ value.title }}</v-card-title>
+    <v-card-title class="headline">{{ title }}</v-card-title>
+    <v-card-subtitle>{{ value.date | date }}</v-card-subtitle>
     <v-card-text>
       <v-timeline dense>
-        <draggable class="list-group" :list="value.locations" group="schedule" @change="log">
+        <draggable
+          class="list-group"
+          group="schedule"
+          @change="log"
+          v-bind="dragOptions"
+        >
           <v-timeline-item
+            small
+            class="list-group-item"
             v-for="(location, index) in value.locations"
-            :key="index"
+            :key="`time-${index}`"
           >
             <travel-location :key="index" v-model="value.locations[index]" @delete="deleteLocation"></travel-location>
           </v-timeline-item>
         </draggable>
       </v-timeline>
-      <v-btn @click="addLocation()" outlined block>Add Location</v-btn>
     </v-card-text>
+    <v-card-actions>
+      <v-btn @click="addLocation()" outlined block>Add Location</v-btn>
+    </v-card-actions>
   </v-card>
 </template>
 
 <script>
 import TravelLocation from './TravelLocation'
-import {  getDefaultLocation } from '../api/travels'
+import { getDefaultLocation } from '../api/travels'
 import draggable from 'vuedraggable'
+import { createNamespacedHelpers } from 'vuex'
+const { mapState } = createNamespacedHelpers('travel')
 
 export default {
   name: 'travel-schedule',
   props: ['value'],
   components: { TravelLocation, draggable },
+  data: () => ({
+  }),
   computed: {
+    ...mapState(['editable']),
     title() {
       return `Day ${this.$vnode.key + 1}`
+    },
+    dragOptions() {
+      return {
+        animation: 200,
+        handle: '.handle',
+        list: this.value.locations,
+        disabled: !this.editable
+      }
     }
   },
   methods: {
