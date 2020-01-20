@@ -5,7 +5,9 @@
     <v-card-title class="headline">{{ title }}</v-card-title>
     <v-card-subtitle>{{ value.date | date }}</v-card-subtitle>
     <v-card-text>
-      <v-timeline dense>
+      <v-timeline
+        dense
+      >
         <draggable
           class="list-group"
           group="schedule"
@@ -14,10 +16,15 @@
         >
           <v-timeline-item
             small
+            fill-dot
+            right
             class="list-group-item"
             v-for="(location, index) in value.locations"
             :key="`time-${index}`"
           >
+            <template #icon>
+              <span class="white--text">{{ index + 1 }}</span>
+            </template>
             <travel-location :key="index" v-model="value.locations[index]" @delete="deleteLocation"></travel-location>
           </v-timeline-item>
         </draggable>
@@ -59,6 +66,7 @@ export default {
   methods: {
     addLocation() {
       this.value.locations.push(getDefaultLocation())
+      this.$emit('update')
     },
     deleteLocation(index) {
       this.value.locations.splice(index, 1)
@@ -70,7 +78,7 @@ export default {
   watch: {
     value: {
       deep: true,
-      immediate: true,
+      // immediate: true,
       handler() {
         this.$emit('input', this.value)
       }

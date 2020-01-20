@@ -15,7 +15,7 @@
           right
           absolute
           small
-          @click="openDialog"
+          @click.stop="openDialog"
         >
           <v-icon>mdi-plus</v-icon>
         </v-btn>
@@ -38,7 +38,7 @@
             </v-list-item>
           </template>
         </v-list>
-        <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+        <v-dialog v-model="dialog" eager fullscreen hide-overlay transition="dialog-bottom-transition">
           <v-card>
             <v-toolbar>
               <v-btn icon @click="dialog = false">
@@ -51,43 +51,7 @@
               </v-toolbar-items>
             </v-toolbar>
             <v-form lazy-validation ref="form">
-              <v-list three-line subheader>
-                <v-list-item>
-                  <v-text-field
-                    label="Title"
-                    v-model="travel.title"
-                    required
-                    :rules="[v => !!v || 'Title is required']"
-                  ></v-text-field>
-                </v-list-item>
-                <v-list-item>
-                  <v-date-picker
-                    v-model="dates"
-                    range
-                    scrollable
-                    landscape
-                    full-width
-                  ></v-date-picker>
-                </v-list-item>
-                <v-list-item>
-                  <v-text-field
-                    label="From"
-                    v-model="travel.from"
-                    readonly
-                    required
-                    :rules="[v => !!v || 'From date is required']"
-                  ></v-text-field>
-                </v-list-item>
-                <v-list-item>
-                  <v-text-field
-                    label="To"
-                    v-model="travel.to"
-                    readonly
-                    required
-                    :rules="[v => !!v || 'To date is required']"
-                  ></v-text-field>
-                </v-list-item>
-              </v-list>
+              <travel-form v-model="travel"></travel-form>
             </v-form>
           </v-card>
         </v-dialog>
@@ -99,27 +63,20 @@
 <script>
 import { signOut } from '../api/auth'
 import { getTravels, addTravel, getDefaultTravel } from '../api/travels'
+import TravelForm from '../components/TravelForm'
 
 const addHash = '#add'
 
 export default {
   name: 'travel-list',
   props: ['uid'],
+  components: { TravelForm },
   data: () => ({
     dialog: false,
     travels: [],
     travel: getDefaultTravel()
   }),
   computed: {
-    dates: {
-      get() {
-        return [this.travel.from, this.travel.to].filter(date => !!date)
-      },
-      set(dates) {
-        this.travel.from = dates[0] || null
-        this.travel.to = dates[1] || null
-      }
-    },
     isOpened() {
       return this.$route.hash === addHash
     },
@@ -128,10 +85,10 @@ export default {
     }
   },
   methods: {
-    async addTravel() {
+    async addTravel(travel) {
       if (!this.form.validate()) return
 
-      const id = await addTravel(this.uid, this.travel)
+      const id = await addTravel(this.uid, travel)
       this.$router.push({
         name: 'travel',
         params: {
@@ -147,20 +104,17 @@ export default {
     },
     openDialog() {
       this.dialog = true
+      this.form.resetValidation()
       this.$router.push({
         ...this.$route,
         hash: addHash
       })
     },
     closeDialog() {
-      if (this.isOpened) {
-        this.$router.replace({
-          ...this.$route,
-          hash: ''
-        })
-      }
       this.travel = getDefaultTravel()
-      this.form.resetValidation()
+      if (this.isOpened) {
+        this.$router.back()
+      }
     },
   },
   watch: {
@@ -173,7 +127,12 @@ export default {
     next()
   },
   async created() {
-    this.dialog = this.isOpened
+    if (this.$route.hash === addHash) { 
+      this.$router.replace({
+        ...this.$route,
+        hash: ''
+      })
+    }
     this.travels = await getTravels(this.uid)
   }
 }

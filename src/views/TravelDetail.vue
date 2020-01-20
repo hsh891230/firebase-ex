@@ -12,7 +12,7 @@
       <v-toolbar-title>
         <span class="headline mr-2">{{ travel.title }}</span>
         <span class="caption mr-2">{{ travel.from | date }} - {{ travel.to | date }}</span>
-        <v-icon small>mdi-pencil</v-icon>
+        <v-icon small @click="editTravel">mdi-pencil</v-icon>
       </v-toolbar-title>
       <v-spacer></v-spacer>
       <v-btn icon @click="signOut">
@@ -77,29 +77,50 @@
         <travel-schedule
           v-for="(schedule, index) in travel.schedules"
           :key="index" v-model="travel.schedules[index]"
+          @update="update"
         ></travel-schedule>
       </v-container>
     </v-content>
+    <v-dialog v-model="dialog" eager fullscreen hide-overlay transition="dialog-bottom-transition">
+      <v-card>
+        <v-toolbar>
+          <v-btn icon @click="dialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+          <v-toolbar-title>Edit Travel</v-toolbar-title>
+          <v-spacer></v-spacer>
+          <v-toolbar-items>
+            <v-btn text @click="updateTravel">Save</v-btn>
+          </v-toolbar-items>
+        </v-toolbar>
+        <v-form lazy-validation ref="form">
+          <travel-form v-model="editedTravel"></travel-form>
+        </v-form>
+      </v-card>
+    </v-dialog>
   </v-app>
 </template>
 
 <script>
 import { signOut } from '../api/auth'
-import { onTravel, getDefaultTravel, getDefaultLocation, updateTravel } from '../api/travels'
+import { dateRange, onTravel, getDefaultTravel, getDefaultLocation, updateTravel, getDefaultSchedule } from '../api/travels'
 import TravelSchedule from '../components/TravelSchedule'
 import { createNamespacedHelpers } from 'vuex'
 import _ from 'lodash'
 const { mapState, mapActions } = createNamespacedHelpers('travel')
+import TravelForm from '../components/TravelForm'
 
 export default {
   name: 'travel-detail',
   props: ['uid', 'id'],
-  components: { TravelSchedule },
+  components: { TravelSchedule, TravelForm },
   data: () => ({
     travel: getDefaultTravel(),
     unsubscribe: null,
     tempSchedules: [],
-    fab: false
+    fab: false,
+    dialog: false,
+    editedTravel: {}
   }),
   computed: {
     ...mapState(['editable'])
@@ -112,9 +133,8 @@ export default {
     addLocation(index) {
       this.travel.schedules[index].locations.push(getDefaultLocation())
     },
-    updateTravel() {
-      // TODO
-      updateTravel(this.uid, this.id, this.travel)
+    async update() {
+      return updateTravel(this.uid, this.id, this.travel)
     },
     editOrder() {
       this.tempSchedules = _.cloneDeep(this.travel.schedules)
@@ -126,13 +146,32 @@ export default {
       this.setEditable(false)
     },
     async saveOrder() {
-      await updateTravel(this.uid, this.id, this.travel)
+      await this.update()
       this.setEditable(false)
     },
     signOut() {
       signOut().then(() => {
         this.$router.push({ name: 'login' })
       })
+    },
+    async updateTravel() {
+      const schedules = dateRange(this.editedTravel.from, this.editedTravel.to)
+        .map((date, index) => ({ ...(this.travel.schedules[index] || getDefaultSchedule()), date }))
+
+      const travel = {
+        ...this.editedTravel,
+        schedules: schedules
+      }
+      await updateTravel(this.uid, this.id, travel)
+      this.editedTravel = {}
+      this.dialog = false
+    },
+    editTravel() {
+      const { title, from, to } = this.travel
+      this.editedTravel = {
+        title, from, to
+      }
+      this.dialog = true
     }
   },
   created() {

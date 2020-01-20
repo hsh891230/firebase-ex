@@ -29,7 +29,7 @@ export const getDefaultTravel = () => _.cloneDeep(defaultTravel)
 export const getDefaultSchedule = () => _.cloneDeep(defaultSchedule)
 export const getDefaultLocation = () => _.cloneDeep(defaultLocation)
 
-const dateRange = (fromDate, toDate) => {
+export const dateRange = (fromDate, toDate) => {
   const range = []
   const from = moment(fromDate)
   const to = moment(toDate)
@@ -39,7 +39,6 @@ const dateRange = (fromDate, toDate) => {
   }
   return range
 }
-
 
 export const getTravels = async (uid) => {
   return db.collection(`travelers/${uid}/travels`)
