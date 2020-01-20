@@ -20,11 +20,12 @@
       </v-btn>
       <template #extension>
         <v-tabs
+          v-model="tabs"
           align-with-title
           background-color="transparent"
         >
-          <v-tab>Tab 1</v-tab>
-          <v-tab>Tab 2</v-tab>
+          <v-tab href="#tab-1">Tab 1</v-tab>
+          <v-tab href="#tab-2">Tab 2</v-tab>
           <v-tab>Tab 3</v-tab>
         </v-tabs>
 
@@ -74,11 +75,18 @@
     </v-app-bar>
     <v-content>
       <v-container fluid>
-        <travel-schedule
-          v-for="(schedule, index) in travel.schedules"
-          :key="index" v-model="travel.schedules[index]"
-          @update="update"
-        ></travel-schedule>
+        <v-tabs-items v-model="tabs">
+          <v-tab-item value="tab-1">
+            <travel-schedule
+              v-for="(schedule, index) in travel.schedules"
+              :key="index" v-model="travel.schedules[index]"
+              @update="update"
+            ></travel-schedule>
+          <v-tab-item value="tab-2">
+            tab2222
+          </v-tab-item>
+          </v-tab-item>
+        </v-tabs-items>
       </v-container>
     </v-content>
     <v-dialog v-model="dialog" eager fullscreen hide-overlay transition="dialog-bottom-transition">
@@ -120,7 +128,8 @@ export default {
     tempSchedules: [],
     fab: false,
     dialog: false,
-    editedTravel: {}
+    editedTravel: {},
+    tabs: 'tab-1'
   }),
   computed: {
     ...mapState(['editable'])
